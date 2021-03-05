@@ -1,0 +1,184 @@
+---
+title: "GAM Homework"
+author: "Jiachen Feng"
+date: "2021/2/25"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ISLR)
+```
+
+## 7.3
+
+```{r}
+fun1 <- function(x){
+  set.seed(1)
+  1+x+rnorm(1)
+}
+
+fun2 <- function(x){
+  set.seed(1)
+  1+x-2*(x-1)^2+rnorm(1)
+}
+
+curve(fun1,-2,1,xlim = c(-2,2),ylim = c(-2,2))
+curve(fun2,1,2,add = TRUE)
+text(0,0,c("Slope=1"))
+```
+
+## 7.9
+(a)
+```{r}
+library(MASS)
+data("Boston")
+fit <- lm(nox~poly(dis,3),data = Boston)
+summary(fit)
+
+dis.grid <- seq(from=range(Boston$dis)[1],to=range(Boston$dis)[2])
+preds <- predict(fit,newdata = list(dis=dis.grid),se=T)
+
+plot(Boston$dis,Boston$nox)
+lines(dis.grid,preds$fit,lwd=2,col="blue")
+
+```
+
+(b)
+```{r}
+fit.1 <- lm(nox~dis,data = Boston)
+fit.2 <- lm(nox~poly(dis,2),data = Boston)
+fit.3 <- lm(nox~poly(dis,3),data = Boston)
+fit.4 <- lm(nox~poly(dis,4),data = Boston)
+fit.5 <- lm(nox~poly(dis,5),data = Boston)
+fit.6 <- lm(nox~poly(dis,6),data = Boston)
+anova(fit.1,fit.2,fit.3,fit.4,fit.5,fit.6)
+```
+
+(c)
+```{r}
+library(boot)
+delta <- rep(NA,6)
+for (i in 1:6) {
+  fit <- glm(nox~poly(dis,i),data = Boston)
+  delta[i] <- cv.glm(Boston,fit,K=10)$delta[1]
+  
+}
+plot(1:6,delta)
+
+```
+
+(d)
+```{r}
+library(splines)
+#4 degrees of freedom
+#The range of dis is about 0 to 12
+fit <- lm(nox~bs(dis,knots = c(3,6,9)),data = Boston)
+summary(fit)
+
+preds <- predict(fit,newdata = list(dis=dis.grid),se=T)
+plot(nox~dis,data = Boston)
+lines(dis.grid,preds$fit,lwd=2,col="blue")
+```
+
+(e)
+```{r}
+#The range of dis is about 0 to 12
+fit.1 <- lm(nox~bs(dis,knots =6),data = Boston)
+
+preds <- predict(fit.1,newdata = list(dis=dis.grid),se=T)
+plot(nox~dis,data = Boston)
+lines(dis.grid,preds$fit,lwd=2,col="blue")
+
+fit.2 <- lm(nox~bs(dis,knots =c(4,8)),data = Boston)
+
+preds <- predict(fit.2,newdata = list(dis=dis.grid),se=T)
+plot(nox~dis,data = Boston)
+lines(dis.grid,preds$fit,lwd=2,col="blue")
+
+anova(fit.1,fit.2)
+```
+
+(f)
+```{r}
+library(boot)
+delta <- rep(NA,2)
+fit.1 <- glm(nox~bs(dis,knots =6),data = Boston)
+delta[1] <- cv.glm(Boston,fit.1,K=10)$delta[1]
+fit.2 <- glm(nox~bs(dis,knots =c(4,8)),data = Boston)
+delta[2] <- cv.glm(Boston,fit.2,K=10)$delta[2]
+delta
+```
+
+## 7.10
+(a)
+```{r}
+data("College")
+
+library(leaps)
+regfit <- regsubsets(College$Outstate~.,data = College,method = "forward")
+summary(regfit)
+coef(regfit,8)
+```
+
+(b)
+```{r}
+names(coef(regfit,8))
+library(gam)
+gam <- gam(Outstate~Private+s(Room.Board)+s(Personal)+s(PhD)+s(Terminal)+s(perc.alumni)+s(Expend)+s(Grad.Rate),data = College)
+
+par(mfrow=c(1,3))
+plot(gam, se = T, col = "blue")
+
+```
+
+(c)
+```{r}
+summary(gam)
+```
+
+(d)
+Personal, Expend and Grad.Rate.
+
+## 7.11
+(a)
+```{r}
+set.seed(100)
+y <- rnorm(100,mean=10)
+x1 <- rnorm(100,mean=1,sd=.5)
+x2 <- rnorm(100,mean=100,sd=10)
+dat <- data.frame(y,x1,x2)
+```
+
+(b)
+```{r}
+beta1 <- 1
+```
+
+(c)
+```{r}
+a <- y-beta1*x1
+beta2 <- lm(a~x2)$coef[2]
+```
+
+(d)
+```{r}
+a <- y-beta2*x2
+beta1 <- lm(a~x1)$coef[2]
+```
+
+(e)
+```{r}
+# library(tidyverse)
+# beta <- data.frame(0,beta1,beta2)
+# colnames(beta)[1] <- 'beta0'
+# for (i in 1:1000) {
+# a <- y-beta1*x1
+# beta2 <- lm(a~x2)$coef[2]
+# a <- y-beta2*x2
+# beta1 <- lm(a~x1)$coef[2]
+# beta0 <- lm(a~x1)$coef[1]
+# add_row(beta0,beta1,beta2)
+# }
+```
+

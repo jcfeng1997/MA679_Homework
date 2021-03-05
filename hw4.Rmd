@@ -1,0 +1,127 @@
+---
+title: "Resampling and regularization Homework"
+author: "Jiachen Feng"
+date: "2021/2/12"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## 5.8
+(a)
+```{r}
+set.seed(1)
+x <- rnorm(100)
+y <- x-2*x^2+rnorm(100)
+```
+n is 100, p is 2. $$y=x-x^2+\epsilon$$
+
+(b)
+```{r}
+plot(x,y,pch=20)
+```
+The scatterplot is like a quadratic function.
+
+(c)
+```{r}
+library(boot)
+set.seed(100)
+data <- data.frame(x,y)
+mod1 <- glm(y~x)
+cv.glm(data,mod1)$delta[1]
+
+mod2 <- glm(y~poly(x,2))
+cv.glm(data,mod2)$delta[1]
+
+mod3 <- glm(y~poly(x,3))
+cv.glm(data,mod3)$delta[1]
+
+mod4 <- glm(y~poly(x,4))
+cv.glm(data,mod4)$delta[1]
+```
+
+(d)
+```{r}
+set.seed(200)
+mod1 <- glm(y~x)
+cv.glm(data,mod1)$delta[1]
+
+mod2 <- glm(y~poly(x,2))
+cv.glm(data,mod2)$delta[1]
+
+mod3 <- glm(y~poly(x,3))
+cv.glm(data,mod3)$delta[1]
+
+mod4 <- glm(y~poly(x,4))
+cv.glm(data,mod4)$delta[1]
+```
+Same.
+
+(e)
+model 2. The function is quadratic, so that this model fits best.
+
+(f)
+```{r}
+summary(mod1)
+summary(mod2)
+summary(mod3)
+summary(mod4)
+```
+All of the four models are statistically significant.
+
+## 6.2
+(a)
+i. Wrong.
+ii. Wrong.
+iii. Right.
+iv. Wrong.
+It is less flexible because the complexity of lasso is related to $\lambda$.
+
+(b)
+Ridge regression is less flexible and hence will give improved prediction accuracy when its increase in bias is less than its decrease in variance.
+
+(c)
+Non-linear methods are more flexible and hence will give improved prediction accuracy when its increase in variance is less than its decrease in bias.
+
+## 6.10
+(a)
+```{r}
+set.seed(1000)
+mat <- matrix(rnorm(1000 * 20), 1000, 20)
+p <- rnorm(20)
+p[1] <- 0
+p[2] <- 0
+p[3] <- 0
+epsilon <- rnorm(1000)
+y <- mat %*% p + epsilon
+```
+
+(b)
+```{r}
+set.seed(1000)
+mat1 <- matrix(rnorm(100 * 20), 100, 20)
+p1 <- rnorm(20)
+p1[1] <- 0
+p1[2] <- 0
+p1[3] <- 0
+epsilon1 <- rnorm(100)
+train <- mat1 %*% p1 + epsilon1
+
+mat2 <- matrix(rnorm(900 * 20), 900, 20)
+p2 <- rnorm(20)
+p2[1] <- 0
+p2[2] <- 0
+p2[3] <- 0
+epsilon2 <- rnorm(900)
+test <- mat2 %*% p2 + epsilon2
+
+```
+
+(c)
+```{r}
+
+```
+

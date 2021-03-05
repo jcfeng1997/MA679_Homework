@@ -1,0 +1,380 @@
+---
+title: "MA679 Classification homework"
+author: "Jiachen Feng"
+date: "2021/2/6"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ISLR)
+library(tidyverse)
+library(MASS)
+library(class)
+```
+
+## 4.6
+(a)
+```{r}
+p <- plogis(-6+0.05*40+3.5)
+p
+```
+
+$$P(Y=1)=logit^{-1}(-6+0.05*40+3.5)=37.75\%$$
+
+(b)
+$$0.5=logit^{-1}(-6+0.05*t+3.5)$$
+$$t=50h$$
+
+## 4.8
+Under this circumstance, QDA performs best. The test error rate using logistic regression is higher than KNN-1 test, which means the responses from the logistic function using quadratic variable as predictors. Consequently, there is a quadratic decision boundary. Therefore, QDA performs best.
+
+## 4.9
+(a)
+$$\frac{P(default)}{1-P(default)}=0.37$$
+$$P(default)=0.27$$
+(b)
+$$odds=\frac{0.16}{1-0.16}=0.19$$
+
+## 4.10
+(a)
+```{r}
+names(Weekly)
+summary(Weekly)
+
+attach(Weekly)
+plot(Volume,pch=20)
+```
+The max and min values of the **lag** variables are the same.
+
+(b)
+```{r}
+fit_1 <- glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume,data = Weekly,family = binomial)
+summary(fit_1)
+```
+**Lag2** appears to be a significant predictor.
+
+(c)
+```{r}
+pred <- predict(fit_1, type = "response")
+contrasts(Direction)
+
+pred1 <- rep("Down", length(pred))
+pred1[pred > 0.5] <- "Up"
+
+# Confusion Matrix
+table(pred1, Direction)
+
+# Compute overall fraction of correct predictions
+mean(pred1==Direction)
+```
+Training error rate is high, and this method needs to be improved.
+
+(d)
+```{r}
+train <- filter(Weekly,Year<=2008)
+heldout <- filter(Weekly,Year>2008)
+fit_2 <- glm(Direction~Lag2,data = train,family = binomial)
+pred <- predict(fit_2,heldout,type="response")
+  
+pred2 <- rep("Down", length(pred))
+pred2[pred > 0.5] <- "Up"
+
+# Confusion Matrix
+table(pred2, heldout$Direction)
+
+# Compute overall fraction of correct predictions
+mean(pred2==heldout$Direction)
+```
+
+(e)
+```{r}
+fit_3 <- lda(Direction~Lag2,data = train)
+fit_3
+plot(fit_3)
+
+pred <- predict(fit_3,heldout,type="response")
+names(pred)
+
+# Confusion Matrix
+table(pred$class, heldout$Direction)
+
+# Compute overall fraction of correct predictions
+mean(pred$class==heldout$Direction)
+```
+
+(f)
+```{r}
+fit_4 <- qda(Direction~Lag2,data = train)
+fit_4
+
+pred <- predict(fit_4,heldout,type="response")
+names(pred)
+
+# Confusion Matrix
+table(pred$class, heldout$Direction)
+
+# Compute overall fraction of correct predictions
+mean(pred$class==heldout$Direction)
+```
+
+(g)
+```{r}
+train <- filter(Weekly,Year<=2008)
+train <- train[,3]
+heldout <- filter(Weekly,Year>2008)
+heldout <- heldout[,3]
+
+direction <- filter(Weekly,Year<=2008)$Direction
+train <- as.matrix(na.omit(train))
+test <- as.matrix(na.omit(heldout))
+
+set.seed(1)
+predknn <- knn(train,test,direction,k=1)
+table(predknn, filter(Weekly,Year>2008)$Direction)
+
+mean(predknn==filter(Weekly,Year>2008)$Direction)
+
+```
+(h)
+LDA and logistic regression provide the best results.
+
+(i)
+```{r}
+train <- filter(Weekly,Year<=2008)
+heldout <- filter(Weekly,Year>2008)
+
+#Logistic regression
+fit_5 <- glm(Direction~Lag2^2,data = train,family = binomial)
+pred <- predict(fit_5,heldout,type="response")
+  
+pred3 <- rep("Down", length(pred))
+pred3[pred > 0.5] <- "Up"
+
+## Confusion Matrix
+table(pred3, heldout$Direction)
+
+## Compute overall fraction of correct predictions
+mean(pred3==heldout$Direction)
+
+#LDA
+fit_6 <- lda(Direction~Lag2^2,data = train)
+
+pred <- predict(fit_6,heldout,type="response")
+
+## Confusion Matrix
+table(pred$class, heldout$Direction)
+
+## Compute overall fraction of correct predictions
+mean(pred$class==heldout$Direction)
+
+#QDA
+fit_7 <- qda(Direction~Lag2^2,data = train)
+
+pred <- predict(fit_7,heldout,type="response")
+
+## Confusion Matrix
+table(pred$class, heldout$Direction)
+
+## Compute overall fraction of correct predictions
+mean(pred$class==heldout$Direction)
+
+#KNN-3
+train <- train[,3]^2
+heldout <- heldout[,3]^2
+
+direction <- filter(Weekly,Year<=2008)$Direction
+train <- as.matrix(na.omit(train))
+test <- as.matrix(na.omit(heldout))
+
+set.seed(1)
+predknn <- knn(train,test,direction,k=3)
+table(predknn, filter(Weekly,Year>2008)$Direction)
+
+mean(predknn==filter(Weekly,Year>2008)$Direction)
+
+```
+
+## 4.11
+(a)
+```{r}
+Auto <- data.frame(Auto)
+Auto$mpg01[Auto$mpg>median(Auto$mpg)] <- 1
+Auto$mpg01[Auto$mpg<median(Auto$mpg)] <- 0
+```
+
+(b)
+```{r}
+boxplot(Auto$cylinders~Auto$mpg01)
+boxplot(Auto$displacement~Auto$mpg01)
+boxplot(Auto$horsepower~Auto$mpg01)
+boxplot(Auto$weight~Auto$mpg01)
+boxplot(Auto$acceleration~Auto$mpg01)
+boxplot(Auto$year~Auto$mpg01)
+boxplot(Auto$origin~Auto$mpg01)
+
+```
+Acceleration seems to be an important feature.
+
+(c)
+```{r}
+train <- filter(Auto,year<=78)
+test <- filter(Auto,year<78)
+```
+
+(d)
+```{r}
+fit_8 <- lda(mpg01~acceleration,data = train)
+
+pred <- predict(fit_8,test,type="response")
+
+## Confusion Matrix
+table(pred$class, test$mpg01)
+
+## Compute overall fraction of correct predictions
+mean(pred$class==test$mpg01)
+```
+
+(e)
+```{r}
+fit_9 <- qda(mpg01~acceleration,data = train)
+
+pred <- predict(fit_9,test,type="response")
+
+## Confusion Matrix
+table(pred$class, test$mpg01)
+
+## Compute overall fraction of correct predictions
+mean(pred$class==test$mpg01)
+```
+
+(f)
+```{r}
+fit_10 <- glm(mpg01~acceleration,data = train,family = binomial)
+
+pred <- predict(fit_10,test,type="response")
+pred1 <- rep("0", length(pred))
+pred1[pred > 0.5] <- "1"
+
+## Confusion Matrix
+table(pred1, test$mpg01)
+
+## Compute overall fraction of correct predictions
+mean(pred1==test$mpg01)
+```
+
+(g)
+```{r}
+train <- filter(Auto,year<=78)
+test <- filter(Auto,year<78)
+train <- train[,6]
+test <- test[,6]
+
+mpg <- filter(Auto,year<=78)$mpg01
+train <- as.matrix(na.omit(train))
+test <- as.matrix(na.omit(test))
+
+set.seed(1)
+#k=1
+predknn <- knn(train,test,mpg,k=1)
+## mean(predknn==filter(Auto,year>78)$mpg01)
+
+#k=5
+predknn <- knn(train,test,mpg,k=5)
+## mean(predknn==filter(Auto,year>78)$mpg01)
+
+#k=15
+predknn <- knn(train,test,mpg,k=15)
+## mean(predknn==filter(Auto,year>78)$mpg01)
+
+#k=50
+predknn <- knn(train,test,mpg,k=50)
+## mean(predknn==filter(Auto,year>78)$mpg01)
+```
+When K=50, KNN performs the best.
+
+## 4.12
+(a)
+```{r}
+Power <- function(){print(2^3)}
+Power()
+```
+
+(b)
+```{r}
+Power2 <- function(x,a){print(x^a)}
+Power2(3,8)
+```
+
+(c)
+```{r}
+Power2(10,3)
+Power2(8,17)
+Power2(131,3)
+```
+
+(d)
+```{r}
+Power3 <- function(x,a){return(x^a)}
+```
+
+(e)
+```{r}
+plot(x <- 1:10, y <- Power3(x,2), xlab="x", ylab="x2",pch=20)
+```
+
+(f)
+```{r}
+PlotPower <- function(x,a){
+  plot(x <- 1:10, y <- Power3(x,a),pch=20)
+}
+PlotPower(1:10,3)
+```
+
+## 4.13
+```{r}
+Boston <- data.frame(Boston)
+Boston$crime[Boston$crim>median(Boston$crim)] <- 1
+Boston$crime[Boston$crim<median(Boston$crim)] <- 0
+
+#LDA
+fit_11 <- lda(crime~zn+indus+nox+rm,data = Boston)
+
+pred <- predict(fit_11,Boston,type="response")
+
+## Confusion Matrix
+table(pred$class, Boston$crime)
+
+## Compute overall fraction of correct predictions
+mean(pred$class==Boston$crime)
+
+#logistic Regression
+fit_12 <- glm(crime~zn+indus+nox+rm,data = Boston,family = binomial)
+
+pred <- predict(fit_12,Boston,type="response")
+pred1 <- rep("0", length(pred))
+pred1[pred > 0.5] <- "1"
+
+## Confusion Matrix
+table(pred1, Boston$crime)
+
+## Compute overall fraction of correct predictions
+mean(pred1==Boston$crime)
+
+#KNN
+set.seed(1)
+
+train <- Boston
+test <- Boston
+train <- train[,c(2,3,5,6)]
+test <- test[,c(2,3,5,6)]
+
+crime <- Boston$crime
+train <- as.matrix(na.omit(train))
+test <- as.matrix(na.omit(test))
+
+predknn <- knn(train,test,crime,k=1)
+mean(predknn==Boston$crime)
+
+```
+

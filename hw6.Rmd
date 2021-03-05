@@ -1,0 +1,179 @@
+---
+title: "Tree Homework"
+author: "Jiachen Feng"
+date: "2021/3/5"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup,include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tree)
+library(RColorBrewer)
+library(ggplot2)
+library(randomForest)
+library(ISLR)
+library(MASS)
+library(gbm)
+```
+
+## 8.1
+```{r,warning=FALSE}
+plot("Mother's IQ","Children's Age",xlim = c(50,100),ylim = c(0,12))
+rect(xleft = 50,ybottom = 0,xright = 100,ytop = 12)
+rect(xleft = 50,ybottom = 0,xright = 65,ytop = 6,col = brewer.pal(3,"YlGnBu"))
+rect(xleft = 50,ybottom = 6,xright = 65,ytop = 12,col=brewer.pal(7,"Spectral"))
+rect(xleft = 65,ybottom = 0,xright = 80,ytop = 6,col=brewer.pal(9,"YlGn"))
+rect(xleft = 65,ybottom = 6,xright = 80,ytop = 12,col=brewer.pal(4,"Blues"))
+rect(xleft = 80,ybottom = 0,xright = 100,ytop = 6,col=brewer.pal(2,"Spectral"))
+rect(xleft = 80,ybottom = 6,xright = 100,ytop = 12,col=brewer.pal(4,"BrBG"))
+text(57,3,"R1")
+text(57,9,"R2")
+text(72,3,"R3")
+text(72,9,"R4")
+text(90,3,"R5")
+text(90,9,"R6")
+abline(v=c(65,80),lwd=3,lty=6)
+abline(h=6,lwd=3,lty=6)
+```
+
+## 8.2
+
+$$\hat{f}(x)=\sum_{b=1}^B\lambda\hat{f}^b(x)$$
+Since we're using depth-one trees,$$f_j(X_j)=I_1*c_m+I_2*c_m$$
+It is additive, so that $$f(X)=\sum_{j=1}^p f_j(X_j)$$
+
+## 8.3
+
+```{r,warning=FALSE}
+errorrate <- function(pm1){
+  max <- pmax(pm1,1-pm1)
+  E <- 1-max
+  return(E)
+}
+Gini <- function(pm1){
+  G <- 2*pm1*(1-pm1)
+  return(G)
+}
+entropy <- function(pm1){
+  D <- -pm1*log(pm1)-(1-pm1)*log(1-pm1)
+  return(D)
+}
+
+ggplot()+
+  stat_function(fun=errorrate,lty=6,col="red")+
+  xlim(0,1)+
+  stat_function(fun = Gini,lty=4)+
+  xlim(0,1)+
+  stat_function(fun = entropy,col="darkblue")+
+  xlim(0,1)+
+  xlab("pm1")
+
+
+```
+
+## 8.5
+
+The left one suggests that the class appears most, whereas the right one suggests that the average of the appearance.
+
+## 8.7
+
+```{r,warning=FALSE}
+data("Boston")
+train <- sample(1:nrow(Boston),nrow(Boston)/2)
+set.seed(1)
+rf1 <- randomForest(medv~.,data = Boston,subset = train,mtry=ncol(Boston)-1,importance=T)
+rf2 <- randomForest(medv~.,data = Boston,subset = train,mtry=ncol(Boston)/2,importance=T)
+rf3 <- randomForest(medv~.,data = Boston,subset = train,mtry=sqrt(ncol(Boston)),importance=T)
+plot(1:500,rf1$mse,col="darkblue",type = "l",ylab = "testerror")
+lines(1:500,rf2$mse,col="red",type = "l")
+lines(1:500,rf3$mse,type = "l")
+```
+
+## 8.8
+### (a)
+```{r,warning=FALSE}
+
+data("Carseats")
+Carseats$High <- ifelse(Carseats$Sales<=8,"No","Yes")
+
+trainset <- sample(1:nrow(Carseats),nrow(Carseats)/2) 
+train <- Carseats[trainset,]
+test <- Carseats[-trainset,]
+```
+
+### (b)
+```{r,warning=FALSE}
+tree1 <- tree(Sales~.,data = train)
+summary(tree1)
+plot(tree1)
+text(tree1,pretty = 0)
+
+yhat <- predict(tree1,newdata = test)
+y <- test[,"Sales"]
+mean((yhat-y)^2)
+```
+
+### (c)
+```{r,warning=FALSE}
+cvtree <- cv.tree(tree1)
+summary(cvtree)
+plot(cvtree$size,cvtree$dev,type = 'b',pch=20)
+prune <- prune.tree(tree1,best = 15)
+
+yhat <- predict(prune,newdata = test)
+y <- test[,"Sales"]
+mean((yhat-y)^2)
+
+```
+
+### (d)
+```{r,warning=FALSE}
+set.seed(1)
+bag <- randomForest(Sales~.,data = train,mtry=11,importance=T)
+
+yhat <- predict(bag,newdata = test)
+y <- test[,"Sales"]
+mean((yhat-y)^2)
+importance(bag)
+
+```
+
+### (e)
+```{r,warning=FALSE}
+set.seed(1)
+rf <- randomForest(Sales~.,data = train,mtry=3,importance=T)
+
+yhat <- predict(rf,newdata = test)
+y <- test[,"Sales"]
+mean((yhat-y)^2)
+importance(rf)
+```
+
+## 8.11
+### (a)
+```{r,warning=FALSE}
+data("Caravan")
+Caravan$Purchase <- as.character(Caravan$Purchase)
+Caravan$Purchase[Caravan$Purchase=="No"] <- 0
+Caravan$Purchase[Caravan$Purchase=="Yes"] <- 1
+train <- Caravan[1:1000,]
+test <- Caravan[1001:nrow(Caravan),]
+```
+
+### (b)
+```{r,warning=FALSE}
+set.seed(1)
+
+boost <- gbm(Purchase~.,data = train,distribution = "bernoulli",n.trees = 1000,shrinkage = .01)
+summary(boost)
+```
+
+### (c)
+```{r,warning=FALSE}
+yhat <- predict(boost,newdata = test,n.trees = 1000)
+```
+

@@ -1,0 +1,242 @@
+---
+title: "MA679 Linear Regression Homework"
+author: "Jiachen Feng"
+date: "2021/2/3"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rstanarm)
+library(stats)
+```
+
+## 3.1
+The null hypothesis is **There is no relationship between Sales and the these kinds of advertising budgets**.
+Based on the p-values, we can conclude that there is some relationship between sales and TV advertising budgets, and also some relationship between sales and radio advertising budgets, for the reason the p-values are extremely small.
+Additionally, it seems that there is no relationship between sales and newspaper advertising budgets.
+
+## 3.2
+The KNN regression methods is closely related to the KNN classifier. KNN classifier decides the prediction point to a certain class, however, KNN regression methods is a method calculating the average of all responses. KNN classifier puts a categorical variable as outcomes, and KNN regression methods is able to process quantitative variables.
+
+## 3.5
+Through mathematical transformation, $a_{i^1}=\frac{{x_i}{x_{i^1}}}{\sum_{j=1}^n{{x_j}^2}}$
+
+## 3.6
+$$\bar{y}=\hat{\beta_0}+\hat{\beta_1}\bar{x}$$
+$$\hat{y}=\hat{\beta_0}+\hat{\beta_1}{x}$$
+Therefore, $\bar{y}=\hat{y}-\hat{\beta_1}{x}+\hat{\beta_1}\bar{x}$,...
+
+## 3.11
+(a)
+```{r}
+set.seed(1)
+x <- rnorm(100)
+y <- 2*x+rnorm(100)
+
+fit_1 <- lm(y~x+0)
+summary(fit_1)
+```
+Based on the p-value, there is a relationship between y and x. The coefficient 1.9939 is close to 2, which means the result of this regression is convincing.
+
+(b)
+```{r}
+fit_2 <- lm(x~y+0)
+summary(fit_2)
+```
+The p-value suggests that there is a relationship between x and y. However, the coefficient 0.3911 is not very close to 0.5. Considering the number of the sample point is 100(not large), the result is reasonable.
+
+(c)
+The sample points are the same. The t-statistics and p-value associated with the null hypothesis are the same.
+
+(d)
+```{r}
+X <- data.frame(x)
+Y <- data.frame(y)
+dat <- cbind(X,Y)
+dat$xy <- dat$x*dat$y
+dat$x2 <- dat$x^2
+dat$y2 <- dat$y^2
+
+sebeta <- (sqrt(100-1)*sum(dat$xy))/(sqrt(sum(dat$x2)*sum(dat$y2)-(sum(dat$xy)^2)))
+sebeta
+```
+The *sebeta* value calculated by R is 18.72593, and the t-value is 18.73. The two value is close.
+
+(e)
+The sample points are the same. For the formula from (d), the results are the same.
+
+(f)
+```{r}
+fit_3 <- lm(y~x)
+fit_4 <- lm(x~y)
+summary(fit_3)
+summary(fit_4)
+```
+
+## 3.12
+(a)
+Y=X.
+
+(b)
+```{r}
+summary(fit_1)
+summary(fit_2)
+```
+
+(c)
+```{r}
+set.seed(1)
+x <- rnorm(100)
+y <- x
+
+fit_1 <- lm(y~x+0)
+summary(fit_1)
+
+fit_2 <- lm(x~y+0)
+summary(fit_2)
+
+```
+
+## 3.13
+(a)
+```{r}
+set.seed(1)
+x <- rnorm(100)
+```
+
+(b)
+```{r}
+eps <- rnorm(100,sd=.5)
+```
+
+(c)
+```{r}
+y <- -1+.5*x+rnorm(100)
+```
+The length is 100, $\beta_0=-1$,$\beta_1=0.5$.
+
+(d)
+```{r}
+plot(x,y,pch=20)
+```
+
+(e)
+```{r}
+fit_5 <- lm(y~x)
+summary(fit_5)
+```
+$\hat{\beta_0}$ is close to $\beta_0$, and $\hat{\beta_1}$ is close to $\beta_1$.
+
+(f)
+```{r}
+plot(x,y,pch=20)
+abline(coef(fit_5)[1],coef(fit_5)[2])
+```
+
+(g)
+```{r}
+fit_6 <- lm(y~x+x^2)
+summary(fit_6)
+```
+No. The p-value and t-value do not change.
+
+(h)
+```{r}
+set.seed(1)
+x <- rnorm(100)
+eps <- rnorm(100,sd=.01)
+y <- -1+.5*x+rnorm(100)
+fit_7 <- lm(y~x)
+summary(fit_7)
+plot(x,y,pch=20)
+abline(coef(fit_7)[1],coef(fit_7)[2])
+fit_8 <- lm(y~x+x^2)
+summary(fit_8)
+```
+
+The result does not seem to change.
+
+(i)
+```{r}
+set.seed(1)
+x <- rnorm(100)
+eps <- rnorm(100,sd=100)
+y <- -1+.5*x+rnorm(100)
+fit_9 <- lm(y~x)
+summary(fit_9)
+plot(x,y,pch=20)
+abline(coef(fit_9)[1],coef(fit_9)[2])
+fit_10 <- lm(y~x+x^2)
+summary(fit_10)
+```
+The result does not seem to change.
+
+(j)
+```{r}
+confint(fit_5)
+confint(fit_7)
+confint(fit_9)
+```
+They are the same.
+
+## 3.14
+(a)
+```{r}
+set.seed(1)
+x1 <- runif(100)
+x2 <- 0.5*x1+rnorm(100)/10
+y <- 2+2*x1+0.3*x2+rnorm(100)
+```
+
+$$y=2+2*x_1+0.3*x_2+\epsilon$$
+The coefficients are 2,2,0.3, relatively.
+
+(b)
+```{r}
+plot(x1,x2,pch=20)
+```
+
+$$y=0.5*x_1+0.1*\epsilon$$
+
+(c)
+```{r}
+fit_11 <- lm(y~x1+x2)
+summary(fit_11)
+```
+$\hat\beta_0,\hat\beta_1,\hat\beta_2$ correspond to the first column of the output result.
+The null hypothesis $H_0:\beta_1=0$ is rejected, and the null hypothesis $H_1:\beta_2=0$ is retained.
+
+(d)
+```{r}
+fit_12 <- lm(y~x1)
+summary(fit_12)
+```
+The coefficients are close to $\hat{\beta_0},\hat{\beta_1}$. The null hypothesis can be rejected, because the p-value is less than 0.05.
+
+(e)
+```{r}
+fit_13 <- lm(y~x2)
+summary(fit_13)
+```
+The null hypothesis can be rejected, because the p-value is less than 0.05.
+
+(f)
+No. The multiple linear regression is used to fit a model with two predictors, and the two predictors have interaction between each other, for the given formula $x_2=0.5*x_1+0.1*\epsilon$.
+
+(g)
+```{r}
+x1 <- c(x1,0.1)
+x2 <- c(x2,0.8)
+y <- c(y,6)
+
+fit_14 <- lm(y~x1+x2)
+summary(fit_14)
+
+fit_15 <- lm(y~x1)
+summary(fit_15)
+
+fit_16 <- lm(y~x2)
+summary(fit_16)
+```
+The new observation is an outlier, because the new observation is far from the previously generated fit line.
